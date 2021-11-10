@@ -53,18 +53,24 @@ void setTarget(const char* path)
 
 void check_errors()
 {
+	bool errored = false;
 	if (opt.type == NoStow) {
 		fputs("You need to define a Stow action (Stow, ReStow, or Delete)\n",
 		      stderr);
-		exit(1);
+		errored = true;
 	}
 	else if (opt.package_dir == NULL) {
 		fputs("Package directory not specified\n", stderr);
-		exit(1);
+		errored = true;
 	}
 	else if (opt.target_dir == NULL) {
 		fputs("Target directory not specified, please specify one with -t\n",
 		      stderr);
+		errored = true;
+	}
+
+	if (errored) {
+		puts("You can use --help to find out more about how to run this program");
 		exit(1);
 	}
 }
