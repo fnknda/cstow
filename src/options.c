@@ -1,4 +1,5 @@
 #include "options.h"
+#include <stdio.h>
 
 #define C_OPTION(c, f, ...)                                                    \
 	if (argv[i][j] == c) {                                                     \
@@ -68,6 +69,24 @@ void check_errors()
 	}
 }
 
+void help()
+{
+	puts("CStow - Stow re implemented in C");
+	puts("");
+	puts("USAGE:");
+	puts("  cstow (-S|-R|-D) -t <target_dir> [FLAGS] <package_dir>");
+	puts("");
+	puts("FLAGS:");
+	puts("  --target, -t <target_dir> - Target is the base destination for the symlinks");
+	puts("  --stow, -S                - Creates symlinks in Target linking to respective files in Package");
+	puts("  --delete, -D              - Deletes all symlinks in Target refering to the files in Package");
+	puts("  --restow, -R              - Same as a Delete followed by a Stow");
+	puts("  --verbose, -v             - Shows actions being taken");
+	puts("  --mkdir, -d               - Don't link directories, make them instead");
+	puts("  --help, -h                - This message (you just did it)");
+	exit(0);
+}
+
 // Unoptimized, but pretty (so I'll let it go)
 void parse_options(int argc, char* argv[])
 {
@@ -80,6 +99,7 @@ void parse_options(int argc, char* argv[])
 				S_OPTION("delete", setDelete)
 				S_OPTION("verbose", setVerbose)
 				S_OPTION("mkdir", setMkdir)
+				S_OPTION("help", help)
 			}
 			else {
 				for (int j = 1; j < strlen(argv[i]); ++j) {
@@ -89,6 +109,7 @@ void parse_options(int argc, char* argv[])
 					C_OPTION('D', setDelete)
 					C_OPTION('v', setVerbose)
 					C_OPTION('d', setMkdir)
+					C_OPTION('h', help)
 				}
 			}
 		}
