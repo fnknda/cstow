@@ -2,4 +2,4 @@
 
 > /sɛstō/
 
-C implementation of the **stow** tool for managing links.
+C implementation of the **stow** tool for managing symbolic links.

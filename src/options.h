@@ -1,16 +1,16 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <string.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 enum StowType
 {
 	NoStow = 0,
 	Stow,
-	DelStow,
+	Delete,
 	ReStow,
 };
 
