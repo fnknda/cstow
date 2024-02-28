@@ -1,13 +1,11 @@
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-enum StowType
-{
+enum StowType {
 	NoStow = 0,
 	Stow,
 	Delete,
@@ -25,6 +23,4 @@ typedef struct {
 extern Options opt;
 
 void parse_options(int argc, char* argv[]);
-void free_options();
-
-#endif
+void free_options(void);
