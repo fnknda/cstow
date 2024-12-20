@@ -1,29 +1,31 @@
 #include "options.h"
+
 #include "logging.h"
 
 #include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define CHAR_OPTION(c, f)                                                    \
-	if (argv[i][j] == c) {                                                    \
-		f;                                                                     \
-		continue;                                                              \
+#define CHAR_OPTION(c, f) \
+	if (argv[i][j] == c) { \
+		f;                  \
+		continue;           \
 	}
 
-#define STRING_OPTION(s, f)                                                  \
-	if (strcmp(&argv[i][2], s) == 0) {                                        \
-		f;                                                                     \
-		continue;                                                              \
+#define STRING_OPTION(s, f)           \
+	if (strcmp(&argv[i][2], s) == 0) { \
+		f;                              \
+		continue;                       \
 	}
 
 Options opt;
 
-void strip_dir(char* dir)
+void strip_dir(char *dir)
 {
 	int l = strlen(dir);
-	if (dir[l - 1] == '/')
+	if (dir[l - 1] == '/') {
 		dir[l - 1] = '\0';
+	}
 }
 
 void setType(enum StowType type)
@@ -41,7 +43,7 @@ void setMkdir(void)
 	opt.mkdir = true;
 }
 
-void setPackageDir(const char* path)
+void setPackageDir(const char *path)
 {
 	opt.package_dir = realpath(path, NULL);
 	if (!opt.package_dir) {
@@ -52,11 +54,11 @@ void setPackageDir(const char* path)
 }
 
 bool got_target_real_path = false;
-void setTargetDir(const char* path)
+void setTargetDir(const char *path)
 {
 	opt.target_dir = realpath(path, NULL);
 	if (!opt.target_dir) {
-		opt.target_dir = path;
+		opt.target_dir = (char *) path;
 		return;
 	}
 	strip_dir(opt.target_dir);
@@ -78,10 +80,12 @@ void check_errors(void)
 		LOGE("Target directory not specified, please specify one with -t");
 	}
 	else if (!got_target_real_path) {
-		if (mkdir(opt.target_dir, 0755) == -1)
+		if (mkdir(opt.target_dir, 0755) == -1) {
 			errored = true;
-		else
+		}
+		else {
 			setTargetDir(opt.target_dir);
+		}
 	}
 
 	if (errored) {
@@ -108,7 +112,7 @@ void help(void)
 	exit(0);
 }
 
-void parse_options(int argc, char* argv[])
+void parse_options(int argc, char *argv[])
 {
 	opt.log_level = LogWrn;
 	for (int i = 1; i < argc; ++i) {
@@ -144,8 +148,9 @@ void parse_options(int argc, char* argv[])
 		}
 	}
 
-	if (opt.target_dir == NULL)
+	if (opt.target_dir == NULL) {
 		setTargetDir(getcwd(NULL, 0));
+	}
 
 	check_errors();
 }

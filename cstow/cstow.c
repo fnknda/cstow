@@ -6,18 +6,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void walk_dir(const char* dir_path);
+void walk_dir(const char *dir_path);
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	parse_options(argc, argv);
 	walk_dir(opt.package_dir);
 	free_options();
 }
 
-void make_symlink(const char* file_path)
+void make_symlink(const char *file_path)
 {
-	const char* relative_path = &file_path[strlen(opt.package_dir)];
+	const char *relative_path = &file_path[strlen(opt.package_dir)];
 	char target_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
 	strcpy(target_path, opt.target_dir);
 	strcat(target_path, relative_path);
@@ -28,7 +28,8 @@ void make_symlink(const char* file_path)
 		return;
 	}
 	else if (errno != ENOENT) {
-		LOGE("Could not stat target file %s (%s)", target_path, strerror(errno));
+		LOGE("Could not stat target file %s (%s)", target_path,
+		     strerror(errno));
 		return;
 	}
 
@@ -36,9 +37,9 @@ void make_symlink(const char* file_path)
 	symlink(file_path, target_path);
 }
 
-void delete_symlink(const char* file_path)
+void delete_symlink(const char *file_path)
 {
-	const char* relative_path = &file_path[strlen(opt.package_dir)];
+	const char *relative_path = &file_path[strlen(opt.package_dir)];
 	char target_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
 	strcpy(target_path, opt.target_dir);
 	strcat(target_path, relative_path);
@@ -59,9 +60,9 @@ void delete_symlink(const char* file_path)
 	unlink(target_path);
 }
 
-void walk_dir(const char* dir_path)
+void walk_dir(const char *dir_path)
 {
-	const char* relative_path = &dir_path[strlen(opt.package_dir)];
+	const char *relative_path = &dir_path[strlen(opt.package_dir)];
 	char target_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
 	strcpy(target_path, opt.target_dir);
 	strcat(target_path, relative_path);
@@ -78,13 +79,13 @@ void walk_dir(const char* dir_path)
 		}
 	}
 
-	DIR* dir = opendir(dir_path);
+	DIR *dir = opendir(dir_path);
 	if (!dir) {
 		perror("opendir");
 		exit(1);
 	}
 
-	struct dirent* entry;
+	struct dirent *entry;
 	while ((entry = readdir(dir))) {
 		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 			continue;
