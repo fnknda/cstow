@@ -97,13 +97,13 @@ void help(void)
 	puts("CStow - Stow re implemented in C");
 	puts("");
 	puts("USAGE:");
-	puts("  cstow (-S|-R|-D) [FLAGS] <package_dir>");
+	puts("  cstow (-S|-R|-D) -t <target_dir> [FLAGS] <package_dir>");
 	puts("");
 	puts("FLAGS:");
-	puts("  --target, -t <target_dir> - Target is the base destination for the symlinks [Default: ./]");
 	puts("  --stow, -S                - Creates symlinks in Target linking to respective files in Package");
 	puts("  --delete, -D              - Deletes all symlinks in Target refering to the files in Package");
 	puts("  --restow, -R              - Same as a Delete followed by a Stow");
+	puts("  --target, -t <target_dir> - Target is the base destination for the symlinks [Default: ./]");
 	puts("  --verbose, -v             - Shows actions being taken");
 	puts("  --mkdir, -d               - Don't symlink directories, make them instead");
 	puts("  --force, -f               - Delete and ReStow will delete files even if they're not symlinks");
