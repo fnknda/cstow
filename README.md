@@ -21,3 +21,7 @@ FLAGS:
   --dry                     - Print, and don't execute any actions against the filesystem (implies verbose)
   --help, -h                - This message (you just did it)
 ```
+
+If the indentation appears a bit off, it's because I set my NeoVim's `tabstop` to 3 (you can check the `.clang-format`).
+
+My project, my rules. :)
