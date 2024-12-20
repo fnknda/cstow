@@ -11,39 +11,34 @@ void walk_dir(const char *dir_path);
 int main(int argc, char *argv[])
 {
 	parse_options(argc, argv);
+
+	LOGD("Package directory: %s", opt.package_dir);
+	LOGD("Target directory: %s", opt.target_dir);
+
 	walk_dir(opt.package_dir);
 	free_options();
 }
 
-void make_symlink(const char *file_path)
+void make_symlink(const char *package_path, const char *target_path)
 {
-	const char *relative_path = &file_path[strlen(opt.package_dir)];
-	char target_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
-	strcpy(target_path, opt.target_dir);
-	strcat(target_path, relative_path);
-
-	struct stat target_stat;
-	if (lstat(target_path, &target_stat) == 0) {
+	errno = 0;
+	if (!opt.dry && access(target_path, F_OK) == 0) {
 		LOGE("File %s already exists", target_path);
 		return;
 	}
-	else if (errno != ENOENT) {
-		LOGE("Could not stat target file %s (%s)", target_path,
-		     strerror(errno));
+	else if (errno && errno != ENOENT) {
+		LOGE("Could not stat target file %s", target_path);
 		return;
 	}
 
-	LOGD("Creating symlink %s -> %s", target_path, file_path);
-	symlink(file_path, target_path);
+	LOGD("Creating symlink %s -> %s", target_path, package_path);
+	if (!opt.dry) {
+		symlink(package_path, target_path);
+	}
 }
 
-void delete_symlink(const char *file_path)
+void delete_symlink(const char *target_path)
 {
-	const char *relative_path = &file_path[strlen(opt.package_dir)];
-	char target_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
-	strcpy(target_path, opt.target_dir);
-	strcat(target_path, relative_path);
-
 	struct stat target_stat;
 	if (lstat(target_path, &target_stat) == -1) {
 		if (opt.type != ReStow || errno != ENOENT)
@@ -51,35 +46,49 @@ void delete_symlink(const char *file_path)
 		return;
 	}
 
-	if ((target_stat.st_mode & S_IFMT) != S_IFLNK) {
-		LOGW("Didn't delete %s, it wasn't a link", target_path);
+	if (!opt.force && (target_stat.st_mode & S_IFMT) != S_IFLNK) {
+		LOGW("Didn't delete %s, it wasn't a symlink", target_path);
 		return;
 	}
 
-	LOGD("Deleting symlink %s", target_path);
-	unlink(target_path);
+	LOGD("Deleting symlink/regular file %s", target_path);
+	if (!opt.dry) {
+		unlink(target_path);
+	}
 }
 
-void walk_dir(const char *dir_path)
+void walk_dir(const char *package_dir_path)
 {
-	const char *relative_path = &dir_path[strlen(opt.package_dir)];
-	char target_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
-	strcpy(target_path, opt.target_dir);
-	strcat(target_path, relative_path);
+	const char *relative_path = &package_dir_path[strlen(opt.package_dir)];
+	char target_dir_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
+	sprintf(target_dir_path, "%s%s", opt.target_dir, relative_path);
 
-	if (access(target_path, F_OK) != 0) {
+	if (opt.type == Delete || opt.type == ReStow) {
+		struct stat target_dir_stat;
+		if (lstat(target_dir_path, &target_dir_stat) == 0) {
+			if (S_ISLNK(target_dir_stat.st_mode)) {
+				LOGD("Deleting directory symlink '%s'", target_dir_path);
+				delete_symlink(target_dir_path);
+				if (opt.type == Delete) {
+					return;
+				}
+			}
+		}
+	}
+
+	if ((opt.type == Stow || opt.type == ReStow) && access(target_dir_path, F_OK) != 0) {
 		if (opt.mkdir) {
-			LOGD("Creating directory %s", target_path);
-			mkdir(target_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+			LOGD("Creating directory %s", target_dir_path);
+			mkdir(target_dir_path, 0775);
 		}
 		else {
-			LOGD("Creating directory symlink %s -> %s", target_path, dir_path);
-			symlink(dir_path, target_path);
+			LOGD("Creating directory symlink '%s' -> '%s'", target_dir_path, package_dir_path);
+			symlink(package_dir_path, target_dir_path);
 			return;
 		}
 	}
 
-	DIR *dir = opendir(dir_path);
+	DIR *dir = opendir(package_dir_path);
 	if (!dir) {
 		perror("opendir");
 		exit(1);
@@ -89,22 +98,29 @@ void walk_dir(const char *dir_path)
 	while ((entry = readdir(dir))) {
 		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 			continue;
-		char entry_path[strlen(dir_path) + strlen(entry->d_name) + 2];
-		strcpy(entry_path, dir_path);
-		strcat(entry_path, "/");
-		strcat(entry_path, entry->d_name);
+		char package_path[strlen(package_dir_path) + strlen(entry->d_name) + 2];
+		sprintf(package_path, "%s/%s", package_dir_path, entry->d_name);
 
 		if (entry->d_type & DT_DIR) {
-			walk_dir(entry_path);
+			walk_dir(package_path);
 		}
 		else if (entry->d_type & DT_REG) {
+			const char *relative_path = &package_path[strlen(opt.package_dir)];
+			char target_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
+			sprintf(target_path, "%s%s", opt.target_dir, relative_path);
+
 			if (opt.type == Delete || opt.type == ReStow) {
-				delete_symlink(entry_path);
+				delete_symlink(target_path);
 			}
 			if (opt.type == Stow || opt.type == ReStow) {
-				make_symlink(entry_path);
+				make_symlink(package_path, target_path);
 			}
 		}
+	}
+
+	// Attempt to delete empty directories
+	if (opt.type == Delete) {
+		rmdir(target_dir_path);
 	}
 
 	closedir(dir);

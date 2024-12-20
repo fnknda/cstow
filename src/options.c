@@ -43,26 +43,32 @@ void setMkdir(void)
 	opt.mkdir = true;
 }
 
+void setForce(void)
+{
+	opt.force = true;
+}
+
+void setDry(void)
+{
+	opt.dry = true;
+	setVerbose();
+}
+
 void setPackageDir(const char *path)
 {
 	opt.package_dir = realpath(path, NULL);
-	if (!opt.package_dir) {
+	if (opt.package_dir == NULL) {
 		LOGE("The package directory must exist!");
 		exit(1);
 	}
 	strip_dir(opt.package_dir);
 }
 
-bool got_target_real_path = false;
 void setTargetDir(const char *path)
 {
-	opt.target_dir = realpath(path, NULL);
-	if (!opt.target_dir) {
-		opt.target_dir = (char *) path;
-		return;
-	}
+	opt.target_dir = malloc(strlen(path) + 1);
+	strcpy(opt.target_dir, path);
 	strip_dir(opt.target_dir);
-	got_target_real_path = true;
 }
 
 void check_errors(void)
@@ -78,14 +84,6 @@ void check_errors(void)
 	}
 	else if (opt.target_dir == NULL) {
 		LOGE("Target directory not specified, please specify one with -t");
-	}
-	else if (!got_target_real_path) {
-		if (mkdir(opt.target_dir, 0755) == -1) {
-			errored = true;
-		}
-		else {
-			setTargetDir(opt.target_dir);
-		}
 	}
 
 	if (errored) {
@@ -108,6 +106,8 @@ void help(void)
 	puts("  --restow, -R              - Same as a Delete followed by a Stow");
 	puts("  --verbose, -v             - Shows actions being taken");
 	puts("  --mkdir, -d               - Don't symlink directories, make them instead");
+	puts("  --force, -f               - Delete and ReStow will delete files even if they're not symlinks");
+	puts("  --dry                     - Print, and don't execute any actions against the filesystem (implies verbose)");
 	puts("  --help, -h                - This message (you just did it)");
 	exit(0);
 }
@@ -124,7 +124,12 @@ void parse_options(int argc, char *argv[])
 				STRING_OPTION("delete", setType(Delete));
 				STRING_OPTION("verbose", setVerbose());
 				STRING_OPTION("mkdir", setMkdir());
+				STRING_OPTION("force", setForce());
+				STRING_OPTION("dry", setDry());
 				STRING_OPTION("help", help());
+
+				fprintf(stderr, "Argument '%s' not understood\n", argv[i]);
+				exit(1);
 			}
 			else {
 				int next_i = i;
@@ -138,13 +143,17 @@ void parse_options(int argc, char *argv[])
 					CHAR_OPTION('D', setType(Delete));
 					CHAR_OPTION('v', setVerbose());
 					CHAR_OPTION('d', setMkdir());
+					CHAR_OPTION('f', setForce());
 					CHAR_OPTION('h', help());
+
+					fprintf(stderr, "Argument '-%c' not understood\n", argv[i][j]);
+					exit(1);
 				}
 				i = next_i;
 			}
 		}
 		else {
-			setPackageDir(realpath(argv[i], NULL));
+			setPackageDir(argv[i]);
 		}
 	}
 

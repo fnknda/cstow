@@ -20,6 +20,8 @@ typedef struct {
 	enum StowType type;
 	enum LogLevel log_level;
 	bool mkdir;
+	bool force;
+	bool dry;
 } Options;
 
 extern Options opt;
