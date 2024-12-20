@@ -75,7 +75,7 @@ void check_errors(void)
 {
 	bool errored = false;
 	if (opt.type == NoStow) {
-		LOGE("You need to define a Stow action (Stow, ReStow, or Delete)");
+		LOGE("You need to define a Stow action (--stow, --restow, or --delete)");
 		errored = true;
 	}
 	else if (opt.package_dir == NULL) {
@@ -83,7 +83,7 @@ void check_errors(void)
 		errored = true;
 	}
 	else if (opt.target_dir == NULL) {
-		LOGE("Target directory not specified, please specify one with -t");
+		LOGE("Target directory not specified, please specify one using --target");
 	}
 
 	if (errored) {

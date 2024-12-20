@@ -21,6 +21,8 @@ int main(int argc, char *argv[])
 
 void make_symlink(const char *package_path, const char *target_path)
 {
+	// Won't create files if it already exists
+	// Maybe force can delete/overwrite old file (behavior TBD)
 	errno = 0;
 	if (!opt.dry && access(target_path, F_OK) == 0) {
 		LOGE("File %s already exists", target_path);
@@ -39,6 +41,7 @@ void make_symlink(const char *package_path, const char *target_path)
 
 void delete_symlink(const char *target_path)
 {
+	// Check if file exists on target dir
 	struct stat target_stat;
 	if (lstat(target_path, &target_stat) == -1) {
 		if (opt.type != ReStow || errno != ENOENT)
@@ -46,6 +49,7 @@ void delete_symlink(const char *target_path)
 		return;
 	}
 
+	// Won't delete regular files if not forced to
 	if (!opt.force && (target_stat.st_mode & S_IFMT) != S_IFLNK) {
 		LOGW("Didn't delete %s, it wasn't a symlink", target_path);
 		return;
@@ -63,6 +67,8 @@ void walk_dir(const char *package_dir_path)
 	char target_dir_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
 	sprintf(target_dir_path, "%s%s", opt.target_dir, relative_path);
 
+	// If target is a symlink, it's deleted
+	// Delete type leaves here
 	if (opt.type == Delete || opt.type == ReStow) {
 		struct stat target_dir_stat;
 		if (lstat(target_dir_path, &target_dir_stat) == 0) {
@@ -76,6 +82,8 @@ void walk_dir(const char *package_dir_path)
 		}
 	}
 
+	// Check if target already exists. If it doesn't, create symlink or directory
+	// Behaviour depends on mkdir flag. Not mkdir leaves here
 	if ((opt.type == Stow || opt.type == ReStow) && access(target_dir_path, F_OK) != 0) {
 		if (opt.mkdir) {
 			LOGD("Creating directory %s", target_dir_path);
@@ -98,6 +106,7 @@ void walk_dir(const char *package_dir_path)
 	while ((entry = readdir(dir))) {
 		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 			continue;
+
 		char package_path[strlen(package_dir_path) + strlen(entry->d_name) + 2];
 		sprintf(package_path, "%s/%s", package_dir_path, entry->d_name);
 
@@ -118,10 +127,10 @@ void walk_dir(const char *package_dir_path)
 		}
 	}
 
-	// Attempt to delete empty directories
+	closedir(dir);
+
+	// Tries to delete empty directories
 	if (opt.type == Delete) {
 		rmdir(target_dir_path);
 	}
-
-	closedir(dir);
 }
