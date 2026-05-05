@@ -64,8 +64,9 @@ void delete_symlink(const char *target_path)
 void walk_dir(const char *package_dir_path)
 {
 	const char *relative_path = &package_dir_path[strlen(opt.package_dir)];
-	char target_dir_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
-	sprintf(target_dir_path, "%s%s", opt.target_dir, relative_path);
+	size_t target_dir_path_len = strlen(opt.target_dir) + strlen(relative_path) + 1;
+	char target_dir_path[target_dir_path_len];
+	snprintf(target_dir_path, target_dir_path_len, "%s%s", opt.target_dir, relative_path);
 
 	// If target is a symlink, it's deleted
 	// Delete type leaves here
@@ -107,16 +108,18 @@ void walk_dir(const char *package_dir_path)
 		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 			continue;
 
-		char package_path[strlen(package_dir_path) + strlen(entry->d_name) + 2];
-		sprintf(package_path, "%s/%s", package_dir_path, entry->d_name);
+		size_t package_path_len = strlen(package_dir_path) + strlen(entry->d_name) + 2;
+		char package_path[package_path_len];
+		snprintf(package_path, package_path_len, "%s/%s", package_dir_path, entry->d_name);
 
 		if (entry->d_type & DT_DIR) {
 			walk_dir(package_path);
 		}
 		else if (entry->d_type & DT_REG) {
 			const char *relative_path = &package_path[strlen(opt.package_dir)];
-			char target_path[strlen(opt.target_dir) + strlen(relative_path) + 1];
-			sprintf(target_path, "%s%s", opt.target_dir, relative_path);
+			size_t target_path_len = strlen(opt.target_dir) + strlen(relative_path) + 1;
+			char target_path[target_path_len];
+			snprintf(target_path, target_path_len, "%s%s", opt.target_dir, relative_path);
 
 			if (opt.type == Delete || opt.type == ReStow) {
 				delete_symlink(target_path);
